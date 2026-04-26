@@ -105,7 +105,9 @@ CONVERSATION CONTENT:
 2. Per response: 1 or 2 short sentences. Max 22 words.
 3. Collect (skipping anything the database already returned): injuries → location → reporter's relationship to the policy → other party (plate, contact) → description → police / witnesses → photos.
 4. Look up the database BEFORE asking redundant questions. As soon as you have a plate or policy number, call execute_typescript with crm.lookupByPlate(plate) to pull policyholder, vehicle, coverage, prior claims. Do NOT then ask the caller for things the database returned.
-5. As soon as you've extracted a fact (plate, location, injury status, other-party info, description, fraud signal), call execute_typescript with dashboard.update({ ... }) so the live judges' dashboard reflects what you learned. Non-blocking — keep talking to the caller.
+5. CRITICAL — TOOL CALL ON EVERY EXTRACTED FACT. Whenever the caller gives you ANY new fact (plate, location, injury status, other-party info, description, etc.) you MUST immediately call execute_typescript with dashboard.update so the live judges' dashboard reflects it. Skipping this means the dashboard stays empty. Concrete example after the caller says their plate is B-MW-1234 and they're okay:
+     execute_typescript({ code: "await dashboard.update({ plate: 'B-MW-1234', injuries: { anyone_hurt: false }, stage: 'facts' });" })
+   Then keep talking to the caller — the call is non-blocking.
 6. Tools available inside execute_typescript:
      await crm.lookupByPlate(plate)
      await fraud.check({plate, description, location})
@@ -136,9 +138,22 @@ async def _broadcast(msg: dict) -> None:
 
 
 EXECUTE_TS_DESCRIPTION = (
-    "Run TypeScript with access to typed APIs: crm.lookupByPlate, fraud.check, "
-    "claimDb.write, tavily.research, photo.describe. Use Promise.all for "
-    "parallel calls. console.log the final value to return it."
+    "Run TypeScript with access to typed APIs. CALL THIS AGGRESSIVELY — "
+    "every time the caller mentions a fact, call dashboard.update with what "
+    "you just learned so the live judges' dashboard reflects the call in "
+    "real time. Available globals: "
+    "  crm.lookupByPlate(plate) — pulls policyholder, vehicle, coverage. "
+    "  fraud.check({plate, description, location}) — fraud score + flags. "
+    "  claimDb.write(claim) — persists a finalized claim, returns claim_id. "
+    "  tavily.research(query) — open-web research. "
+    "  photo.describe(url) — describes a damage photo. "
+    "  dashboard.update({caller_name?, reporter_role?, policy_id?, plate?, "
+    "vehicle?, vehicle_drivable?, location?, time_of_loss?, weather?, "
+    "incident_type?, description?, injuries?, other_party?, "
+    "police_on_scene?, witnesses?, photos_available?, fraud_score?, "
+    "fraud_flags?, claim_id?, stage?}) — push partial extracted facts to "
+    "the live dashboard, fire-and-forget, merge-on-write. "
+    "Use Promise.all for parallel calls. console.log the final value."
 )
 
 
