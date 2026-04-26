@@ -20,6 +20,8 @@ The dashboard shows every call as it arrives in the sidebar. When you call, your
 
 She picks up after one ring with a short greeting and asks if anyone's hurt.
 
+**Language note:** Reem is currently set up in English. If you'd prefer to test her in German instead, just ping me — happy to swap the voice + system prompt back to German for a German test run. The project was bilingual through earlier iterations, the swap takes ~2 minutes.
+
 ## 3. Try one of these scenarios
 
 Pick whatever feels natural — Reem will adapt. Suggested scripts:
