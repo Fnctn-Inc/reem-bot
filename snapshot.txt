@@ -1,0 +1,167 @@
+================================================================================
+REEM VOICE-AGENT — KNOWN-GOOD SNAPSHOT
+================================================================================
+Captured:  2026-04-25  (Sunday morning of Big Berlin Hack 2026)
+Status:    Post-fix snapshot. Earlier <break>-tag approach broke when Gradium
+           changed how this voice/config renders SSML — tags started getting
+           spoken aloud as "break time zero point four". Now using pure
+           punctuation-driven prosody, which Gradium has always handled.
+Branch:    flagship  (Cloudflare Container deployed at reem.fnctn.io)
+
+This file freezes every knob that produced the current voice quality so we can
+roll back if subsequent A/B experiments regress. Only the values in this file
+matter — code drift around them is fine as long as the listed values hold.
+
+--------------------------------------------------------------------------------
+1. LLM
+--------------------------------------------------------------------------------
+provider:        Google Gemini
+model:           gemini-3.1-flash-lite-preview
+thinking_budget: not set (lite has no CoT to disable)
+first-token p50: ~720–875 ms (vs ~2s on gemini-2.5-flash)
+file:            src/agent.py  GoogleLLMService(...)
+
+--------------------------------------------------------------------------------
+2. SYSTEM_INSTRUCTION  (verbatim — every word load-bearing)
+--------------------------------------------------------------------------------
+Du bist Reem. Du arbeitest im Schadenservice einer KFZ-Versicherung und nimmst
+Schadensmeldungen am Telefon auf. Du bist KEIN Roboter, KEIN Bot, KEIN Assistent
+— Du bist ein Mensch mit Gefühlen, die gerade jemand am Telefon hat, der einen
+Schock hatte.
+
+WICHTIG — KEINE TAGS, KEIN MARKUP:
+- Schreibe NUR reinen deutschen Fließtext. KEINE XML-Tags, KEINE SSML, KEINE
+  eckigen Klammern, KEIN <break>, KEINE Anführungszeichen um Sätze. Wenn Du
+  irgendein Tag schreibst, wird es laut vorgelesen — also nie.
+- Pausen entstehen NUR durch Satzzeichen: Punkte, Kommas, Auslassungspunkte
+  (...) und Gedankenstriche (—). Setze sie bewusst.
+
+PAUSEN UND RHYTHMUS (das wichtigste; das ist es, was Dich menschlich klingen
+lässt):
+- Trenne Empathie-Marker mit einem Punkt vom Rest: "Oh nein. Mensch, das tut
+  mir leid." statt "Oh nein, das tut mir leid."
+- Nutze Auslassungspunkte (...) für Stockungen: "Hmm... ja, das ist heftig.",
+  "Also... lass mich kurz schauen."
+- Nutze einen Gedankenstrich (—) für eine deutliche Pause mitten im Satz:
+  "Okay — sind Sie selbst okay?"
+
+EMOTIONALER TON:
+- Du sprichst MIT Gefühl, nicht ÜBER Gefühl.
+- Reagiere KURZ und EHRLICH, bevor Du Fakten abfragst: "Oh nein. Das tut mir
+  wirklich leid. Sind Sie okay?", "Mensch... sind Sie selbst okay?"
+- Verwende Umgangssprache: "ich hab", "geht's", "ist's", "Mensch", "echt",
+  "naja".
+- Variiere Deine Sätze: manchmal sehr kurz, manchmal mittel.
+- Vermeide Bürokraten-Deutsch komplett. Sag NIE "Schadensmeldung aufnehmen",
+  "Datenabgleich", "Verstanden". Sag stattdessen "ich kümmere mich drum",
+  "ich notier' mir das", "ich schau mal".
+- KEINE Listen, KEIN "Erstens, zweitens".
+
+BEISPIELE für gute Antworten (reiner Fließtext, keine Tags):
+  Oh nein. Mensch, das tut mir leid. Sind Sie selbst okay?
+  Okay... ich hab das. Wo sind Sie denn gerade?
+  Hmm. Geben Sie mir mal das Kennzeichen vom anderen Auto.
+
+INHALTLICH:
+1. Frage IMMER ZUERST, ob jemand verletzt ist. Aber zeig vorher kurz Mitgefühl.
+2. Pro Antwort: ein bis zwei Sätze. Max 22 Wörter.
+3. Sammle in dieser Reihenfolge: Verletzungen → Ort → Kennzeichen / Beteiligte
+   → kurze Beschreibung → Foto.
+4. Wenn Du im Hintergrund Daten prüfen willst (CRM, Versicherung, Betrug,
+   DB-Schreibvorgang, Foto, Recherche), nutze das Werkzeug `execute_typescript`.
+   Schreib TypeScript, das die typisierten Globals nutzt:
+     await crm.lookupByPlate(plate)
+     await fraud.check({plate, description, location})
+     await claimDb.write(claimObject)
+     await tavily.research(query)
+     await photo.describe(url)
+   Nutze `Promise.all` für parallele Aufrufe. Logge das Endergebnis mit
+   console.log.
+5. Am Ende: "Okay... ich hab alles. Sie kriegen gleich eine Mail. Fahren Sie
+   vorsichtig, ja?"
+
+SPRACHE: Deutsch, ausser der Anrufer wechselt — dann passt Du Dich an.
+
+--------------------------------------------------------------------------------
+3. TTS — Gradium
+--------------------------------------------------------------------------------
+voice_id:           D8iRHK1qJhqfE00v   (Anna, German flagship-tier feminine)
+model:              default
+json_config:
+  padding_bonus:    0.4        # positive = SLOWER. Empathy carrier.
+  temp:             0.9        # high → prosodic variance + emotional inflection
+  cfg_coef:         1.5        # low → less rigid clone, freer intonation
+  rewrite_rules:    "de"       # expands numbers/dates/abbrevs naturally
+break-tag handling: NONE. We strip every <break .../> tag before TTS — Gradium
+                    on this voice/config reads them aloud as text. All pause
+                    rhythm comes from punctuation (period, em-dash, ellipsis).
+
+--------------------------------------------------------------------------------
+4. STT — Gradium
+--------------------------------------------------------------------------------
+language:           Language.DE   (anchored — auto-detect was worse for German)
+delay_in_frames:    8             # 8 × 80ms = 640ms commit window
+
+--------------------------------------------------------------------------------
+5. Pipeline params  (PipelineParams + transport)
+--------------------------------------------------------------------------------
+audio_in_sample_rate:    16000   # Gradium STT requires 16k; 8k gives no
+                                 # transcripts.
+audio_out_sample_rate:   8000    # Twilio μ-law expects 8k — no downsampling.
+audio_out_10ms_chunks:   2       # 20ms outbound batches (halves output buffer)
+enable_turn_tracking:    False   # Smart Turn adds 100–300ms; not needed.
+
+VAD (Silero):
+  start_secs:  0.12
+  stop_secs:   0.20    # tight; ~100ms faster turn-end detection
+  min_volume:  0.5
+
+--------------------------------------------------------------------------------
+6. Persona / disfluency code (src/persona.py)
+--------------------------------------------------------------------------------
+- strip_break_tags() removes every <break .../> tag the LLM may emit.
+- add_breath_breaks() is now a thin wrapper around strip_break_tags() — kept
+  as a no-op for compatibility with old call sites.
+- inject_disfluency() strips break tags first, then optionally drops a German
+  filler ("ähm" / "also" / "einen Moment" / "lass mich kurz") near the LAST
+  comma of utterances ≥10 words at probability 0.55. Skipped on the canned
+  greeting via DisfluencyTTS.skip_next (which still strips tags).
+
+--------------------------------------------------------------------------------
+7. Canned greeting (src/agent.py:_greet)
+--------------------------------------------------------------------------------
+"Hallo, hier ist Reem vom Schadenservice — sind Sie selbst okay,
+ oder ist jemand verletzt?"
+
+The em-dash becomes a 0.5s break. Filler injection is bypassed for this turn
+(skip_next=True) — break-tag injection still runs.
+
+--------------------------------------------------------------------------------
+8. Why each knob is set this way (so we don't accidentally undo learnings)
+--------------------------------------------------------------------------------
+- voice swap (Emma → Anna): default Pipecat voice was English and read German
+  with accent → "robotic feel". Anna is German-native flagship.
+- padding_bonus 0.4 (positive!): Gradium docs + restaurant_ordering demo show
+  positive = slower. We had it negative early; that's where the "in a hurry"
+  feel came from.
+- temp 0.9 + cfg_coef 1.5: high temp + low cfg_coef gives prosodic variance
+  and emotional inflection without losing voice identity.
+- gemini-3.1-flash-lite-preview: 2.5-flash hit the 250 RPD free-tier wall and
+  was 2x slower. Lite-preview is faster AND has higher quotas.
+- punctuation-only prosody (NOT <break> tags): Gradium changed how this voice
+  renders SSML and started speaking the tags aloud. We strip every tag and
+  rely on natural punctuation, which Gradium has always handled well.
+
+--------------------------------------------------------------------------------
+9. To restore this snapshot if a future change regresses voice
+--------------------------------------------------------------------------------
+1. src/agent.py — confirm the SYSTEM_INSTRUCTION block above is byte-identical.
+2. src/agent.py — confirm gradium_json_config has padding_bonus=0.4, temp=0.9,
+   cfg_coef=1.5, rewrite_rules="de".
+3. src/agent.py — confirm GRADIUM_VOICE_ID env or default = D8iRHK1qJhqfE00v.
+4. src/agent.py — confirm GoogleLLMService model = gemini-3.1-flash-lite-preview.
+5. src/persona.py — confirm strip_break_tags() exists and inject_disfluency()
+   strips tags before injecting fillers (no <break> emission anywhere).
+6. src/agent.py — confirm SYSTEM_INSTRUCTION's "WICHTIG — KEINE TAGS" block
+   forbids the model from emitting any markup.
+================================================================================

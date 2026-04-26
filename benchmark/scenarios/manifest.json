@@ -1,0 +1,27 @@
+{
+  "name": "Open AIQ Benchmark v0",
+  "version": "0.1.0",
+  "description": "10-scenario noise pack for evaluating real-world voice-AI under realistic acoustic stress.",
+  "license": "CC0",
+  "metric": {
+    "formula": "AIQ = 0.30*WERΔ_score + 0.25*ForegroundScore + 0.25*BargeInScore + 0.20*LatencyResilience",
+    "weights": {
+      "wer_delta_score": 0.30,
+      "foreground": 0.25,
+      "barge_in": 0.25,
+      "latency": 0.20
+    }
+  },
+  "scenarios": [
+    {"name": "ubahn",        "file": "ubahn.wav",        "description": "Berlin U-Bahn ambient with announcement",        "difficulty": "high"},
+    {"name": "cafe",         "file": "cafe.wav",         "description": "Café chatter + espresso machine",                "difficulty": "medium"},
+    {"name": "autobahn",     "file": "autobahn.wav",     "description": "German autobahn with passing trucks",            "difficulty": "high"},
+    {"name": "baby",         "file": "baby.wav",         "description": "Crying infant in same room",                     "difficulty": "very-high"},
+    {"name": "vacuum",       "file": "vacuum.wav",       "description": "Vacuum cleaner adjacent",                        "difficulty": "high"},
+    {"name": "kitchen",      "file": "kitchen.wav",      "description": "Cooking + sizzling pan",                         "difficulty": "medium"},
+    {"name": "two_speakers", "file": "two_speakers.wav", "description": "Two voices interleaved",                         "difficulty": "very-high"},
+    {"name": "music",        "file": "music.wav",        "description": "Background music loud (bass-heavy)",             "difficulty": "medium"},
+    {"name": "wind",         "file": "wind.wav",         "description": "Outdoor wind on phone mic",                      "difficulty": "high"},
+    {"name": "cold_burst",   "file": "cold_burst.wav",   "description": "Sudden 90 dB burst at 5s",                       "difficulty": "extreme"}
+  ]
+}

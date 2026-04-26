@@ -1,0 +1,25 @@
+.env
+.env.*
+!.env.example
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+recordings/
+node_modules/
+hud/node_modules/
+hud/.next/
+hud/dist/
+.aikido_cache
+.pytest_cache/
+*.egg-info/
+.DS_Store
+
+# Cloudflare / Wrangler
+.wrangler/
+.dev.vars
+
+# OS / editor
+.idea/
+.vscode/
+*.swp

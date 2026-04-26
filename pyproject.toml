@@ -1,0 +1,19 @@
+[project]
+name = "lena-fnol"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.136.1",
+    "google-genai>=1.73.1",
+    "httpx>=0.28.1",
+    "livekit-plugins-ai-coustics>=0.2.11",
+    "pipecat-ai[google,silero,silero-vad,twilio,websocket]>=1.0.0",
+    "pydantic>=2.13.3",
+    "pytest>=9.0.3",
+    "pytest-asyncio>=1.3.0",
+    "python-dotenv>=1.2.2",
+    "tavily-python>=0.7.23",
+    "twilio>=9.10.5",
+    "uvicorn[standard]>=0.46.0",
+]

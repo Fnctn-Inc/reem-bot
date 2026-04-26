@@ -1,0 +1,44 @@
+{
+  // Reem voice agent — FastAPI/Pipecat in a Cloudflare Container, fronted by
+  // a Worker that forwards all traffic (incl. the Twilio Media Streams WS)
+  // to the container running at the EU edge.
+  "name": "reem-fnol",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-04-25",
+  "compatibility_flags": ["nodejs_compat"],
+  "account_id": "34bb0b7abee7d135f8283c9bc69a32c0",
+
+  "containers": [
+    {
+      "class_name": "ReemContainer",
+      "image": "./Dockerfile",
+      // "standard" gives more RAM/CPU than "lite" — Pipecat + Silero + Smart
+      // Turn need ~600MB resident; "lite" tops out below that.
+      "instance_type": "standard-1",
+      "max_instances": 1
+    }
+  ],
+
+  "durable_objects": {
+    "bindings": [
+      {
+        "class_name": "ReemContainer",
+        "name": "REEM"
+      }
+    ]
+  },
+
+  "migrations": [
+    {
+      "new_sqlite_classes": ["ReemContainer"],
+      "tag": "v1"
+    }
+  ],
+
+  "routes": [
+    {
+      "pattern": "reem.fnctn.io",
+      "custom_domain": true
+    }
+  ]
+}
