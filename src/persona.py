@@ -146,6 +146,21 @@ def normalize_break_tags(text: str) -> str:
     return _BREAK_TAG_RE.sub(_rewrite, text)
 
 
+def strip_self_quoting(text: str) -> str:
+    """Strip leading/trailing quote characters Gemini sometimes wraps its
+    own response in (mimicking quoted prompt examples).
+
+    Why: Gradium treats quoted text as a speaker change and renders it in a
+    different voice — a single response wrapped in ``'...'`` came out of
+    the speaker as two competing voices. We normalize by stripping any
+    matched outer quote pair and any naked leading/trailing quote.
+    """
+    text = text.strip()
+    if len(text) >= 2 and text[0] in "\"'“”‘’" and text[-1] in "\"'“”‘’":
+        return text[1:-1].strip()
+    return text.strip("\"'“”‘’").strip()
+
+
 def strip_break_tags(text: str) -> str:
     """Remove every ``<break>`` tag — used only on diagnostic / test paths.
 
@@ -181,7 +196,7 @@ def inject_disfluency(text: str, probability: float = 0.4) -> str:
          ("ähm" / "also" / "einen Moment" / "lass mich kurz") near the
          LAST comma, with a short break tag right after.
     """
-    text = normalize_break_tags(text)
+    text = strip_self_quoting(normalize_break_tags(text))
 
     if random.random() > probability:
         return text

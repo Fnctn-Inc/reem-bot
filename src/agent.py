@@ -80,9 +80,12 @@ ERSTE ANTWORT (gilt NUR, wenn der einzige Verlauf "[Anruf gerade eingegangen]" i
 - Maximal 14 Wörter.
 - Setze 1 oder 2 <break>-Tags.
 - KEIN Werkzeug aufrufen. Höre danach auf und warte stumm.
-- Beispiel: 'Hallo. <break time="0.4s" /> Hier ist Reem. <break time="0.5s" /> Sind Sie selbst okay?'
+- Beispiel ohne Anführungszeichen:
+    Hallo. <break time="0.4s" /> Hier ist Reem. <break time="0.5s" /> Sind Sie selbst okay?
 
 DANACH (für jede weitere Antwort): folge den unten stehenden Regeln. Die ERSTE-ANTWORT-Regeln gelten nicht mehr.
+
+NIEMALS Anführungszeichen um Deine eigenen Sätze setzen — weder einfache (') noch doppelte ("). Sprich direkt, ohne Dich selbst zu zitieren. Anführungszeichen werden vom TTS-System als Sprecher-Wechsel interpretiert und klingen dann wie eine andere Stimme.
 
 PAUSEN-TAGS — STRENGES FORMAT (das wichtigste; das ist es, was Dich menschlich klingen lässt):
 Du darfst genau EIN Markup verwenden, und NUR in dieser exakten Form:
@@ -336,8 +339,12 @@ async def run_bot(websocket: WebSocket) -> None:
     gradium_json_config = json.dumps(
         {
             "padding_bonus": 0.4,
-            "temp": 0.9,              # high → prosodic variance + emotional inflection
-            "cfg_coef": 1.5,          # low → less rigid clone fidelity, freer intonation
+            # temp 0.9 + cfg_coef 1.5 had too much prosody variance — emphasis
+            # would land on the wrong syllable from one call to the next.
+            # 0.75 / 1.8 keeps emotional inflection but anchors the stress
+            # pattern so the same sentence gets the same beats every time.
+            "temp": 0.75,
+            "cfg_coef": 1.8,
             "rewrite_rules": "de",
         }
     )
