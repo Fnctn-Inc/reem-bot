@@ -1,6 +1,7 @@
 .env
 .env.*
 !.env.example
+snapshot.txt
 .venv/
 __pycache__/
 *.pyc
