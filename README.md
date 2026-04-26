@@ -150,17 +150,3 @@ Every value in `snapshot.txt` is there because we A/B'd it on real calls. The bi
 ```bash
 uv run pytest -q
 ```
-
-## Diagnostics
-
-The deployed Container exposes a rolling event log at `/__diag`:
-
-```bash
-curl https://reem.fnctn.io/__diag | jq '.events[-20:]'
-```
-
-Cloudflare's `wrangler tail` does not work for Containers, so this in-process buffer is how we debug live calls.
-
-## License
-
-MIT.
