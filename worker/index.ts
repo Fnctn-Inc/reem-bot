@@ -24,6 +24,9 @@ interface Env {
   TWILIO_API_KEY_SID: string;
   TWILIO_API_KEY_SECRET: string;
   TWILIO_PHONE_NUMBER: string;
+  // The TwiML Application that all our calls flow through. The cron handler
+  // re-binds this to our number whenever a shared-account peer wipes it.
+  TWILIO_TWIML_APP_SID: string;
   GRADIUM_VOICE_ID: string;
   PUBLIC_HOST: string;
 }
@@ -58,8 +61,52 @@ export class ReemContainer extends Container<Env> {
   }
 }
 
+/**
+ * Re-bind our Twilio number to our TwiML Application if a shared-account
+ * peer has wiped it. Idempotent: if the binding is already correct we don't
+ * touch it, and we ONLY query/modify our own phone number — other devs'
+ * numbers on the shared account are never read or written.
+ */
+async function rebindTwilioIfNeeded(env: Env): Promise<string> {
+  const auth = "Basic " + btoa(`${env.TWILIO_API_KEY_SID}:${env.TWILIO_API_KEY_SECRET}`);
+  const headers = { Authorization: auth };
+  const base = `https://api.twilio.com/2010-04-01/Accounts/${env.TWILIO_ACCOUNT_SID}`;
+
+  // Server-side filter to ONLY return our number — we don't list anyone else's.
+  const lookup = await fetch(
+    `${base}/IncomingPhoneNumbers.json?PhoneNumber=${encodeURIComponent(env.TWILIO_PHONE_NUMBER)}`,
+    { headers }
+  );
+  if (!lookup.ok) return `lookup failed ${lookup.status}`;
+  const list = (await lookup.json()) as { incoming_phone_numbers?: Array<{ sid: string; voice_application_sid: string | null }> };
+  const num = list.incoming_phone_numbers?.[0];
+  if (!num) return `number ${env.TWILIO_PHONE_NUMBER} not found on this account`;
+
+  if (num.voice_application_sid === env.TWILIO_TWIML_APP_SID) {
+    return "already bound, no action";
+  }
+
+  const body = new URLSearchParams({ VoiceApplicationSid: env.TWILIO_TWIML_APP_SID });
+  const update = await fetch(`${base}/IncomingPhoneNumbers/${num.sid}.json`, {
+    method: "POST",
+    headers: { ...headers, "Content-Type": "application/x-www-form-urlencoded" },
+    body,
+  });
+  if (!update.ok) return `update failed ${update.status} ${await update.text()}`;
+  return `rebound to ${env.TWILIO_TWIML_APP_SID}`;
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     return getContainer(env.REEM, "singleton").fetch(request);
+  },
+
+  async scheduled(_event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
+    ctx.waitUntil(
+      rebindTwilioIfNeeded(env).then(
+        (msg) => console.log(`[twilio-rebind] ${msg}`),
+        (err) => console.error(`[twilio-rebind] error: ${err}`)
+      )
+    );
   },
 };

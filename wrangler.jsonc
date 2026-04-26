@@ -40,5 +40,12 @@
       "pattern": "reem.fnctn.io",
       "custom_domain": true
     }
-  ]
+  ],
+
+  // Cron: re-bind our Twilio number to our TwiML App every 5 min, in case a
+  // peer on the shared Twilio account wipes the binding. Idempotent and only
+  // reads/writes our own number.
+  "triggers": {
+    "crons": ["*/5 * * * *"]
+  }
 }
