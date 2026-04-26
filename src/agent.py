@@ -319,24 +319,21 @@ async def run_bot(websocket: WebSocket) -> None:
             delay_in_frames=8,
         ),
     )
-    # Voice = "Sarah" (ApPgTz3nMHOsWxhK): per Gradium's official catalog
-    # — "warm low-pitched German adult voice that offers the soothing
-    # understanding of a close confidant". Low-pitched survives μ-law 8 kHz
-    # telephony far better than Anna's "airy" character (the airy spectral
-    # content is precisely what narrowband codecs mangle). "Close confidant"
-    # is also the closest framing the German catalog has to FNOL.
+    # Voice = "Anna" (D8iRHK1qJhqfE00v): German flagship-tier feminine,
+    # "balanced airy, brings deep empathy to conversation". This is the
+    # confirmed-good voice from snapshot.txt; an attempted swap to Sarah
+    # (ApPgTz3nMHOsWxhK) regressed to English pronunciation, so we stay on
+    # Anna until we can verify another German voice ID against the live
+    # Gradium catalog directly.
     #
-    # json_config knobs (per docs.gradium.ai/guides/advanced-options):
-    #   padding_bonus  0.1–4.0   positive = slower; 0.6 ≈ +10–15% slower
-    #   temp           0–1.4     default 0.7; lower = more stable prosody,
-    #                            fewer wrong-syllable emphasis spikes
-    #   cfg_coef       1–4       default 2.0; 2.2 = a touch tighter to the
-    #                            reference voice without artifacting
-    #   rewrite_rules  string    "de" expands numbers/dates/abbrevs — needed
-    #                            for "Kennzeichen B-MW-1234", "14:30 Uhr"
+    # json_config knobs (per docs.gradium.ai/llms-full.txt):
+    #   padding_bonus  -4..4   positive = slower
+    #   temp           0..1.4  lower = calmer prosody, more stable emphasis
+    #   cfg_coef       1..4    voice fidelity; higher = closer to reference
+    #   rewrite_rules  string  "de" expands German numbers/dates/abbrevs
     gradium_json_config = json.dumps(
         {
-            "padding_bonus": 0.6,
+            "padding_bonus": 0.4,
             "temp": 0.4,
             "cfg_coef": 2.2,
             "rewrite_rules": "de",
@@ -347,7 +344,7 @@ async def run_bot(websocket: WebSocket) -> None:
         json_config=gradium_json_config,
         settings=GradiumTTSService.Settings(
             model="default",
-            voice=os.getenv("GRADIUM_VOICE_ID", "ApPgTz3nMHOsWxhK"),
+            voice=os.getenv("GRADIUM_VOICE_ID", "D8iRHK1qJhqfE00v"),
         ),
     )
     # thinking_budget=0 disables Gemini 2.5 Flash thinking — saves 0.5–2s on
