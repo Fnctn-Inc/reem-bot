@@ -319,32 +319,26 @@ async def run_bot(websocket: WebSocket) -> None:
             delay_in_frames=8,
         ),
     )
-    # Voice = "Anna" (D8iRHK1qJhqfE00v): German flagship-tier feminine,
-    # "balanced airy, brings deep empathy to conversation" — exact fit for
-    # an FNOL caller who just crashed. The default voice id Pipecat ships
-    # with (YTpq7expH9539ERJ / "Emma") is English and reads German with
-    # noticeable accent, which was the "robotic" feel.
+    # Voice = "Sarah" (ApPgTz3nMHOsWxhK): per Gradium's official catalog
+    # — "warm low-pitched German adult voice that offers the soothing
+    # understanding of a close confidant". Low-pitched survives μ-law 8 kHz
+    # telephony far better than Anna's "airy" character (the airy spectral
+    # content is precisely what narrowband codecs mangle). "Close confidant"
+    # is also the closest framing the German catalog has to FNOL.
     #
-    # json_config knobs (per docs.gradium.ai/llms-full.txt):
-    #   padding_bonus  -4..4   positive = slower; 1.5 buys ~30% slower delivery
-    #   temp           0..1.4  lower = calmer prosody (less hurried)
-    #   cfg_coef       1..4    voice fidelity; 2.0 = default
-    #   rewrite_rules  string  "de" expands numbers/dates/abbrevs naturally —
-    #                          critical for telephony so Reem doesn't blast
-    #                          through "Kennzeichen B-MW-1234" or "14:30 Uhr"
-    # padding_bonus +0.4: gradbot's own restaurant_ordering demo derives
-    # padding from voice_speed where positive = SLOWER, and Gradium's
-    # blog flags slow delivery as the carrier of empathy in FNOL agents.
-    # We were going the wrong direction at -0.3.
+    # json_config knobs (per docs.gradium.ai/guides/advanced-options):
+    #   padding_bonus  0.1–4.0   positive = slower; 0.6 ≈ +10–15% slower
+    #   temp           0–1.4     default 0.7; lower = more stable prosody,
+    #                            fewer wrong-syllable emphasis spikes
+    #   cfg_coef       1–4       default 2.0; 2.2 = a touch tighter to the
+    #                            reference voice without artifacting
+    #   rewrite_rules  string    "de" expands numbers/dates/abbrevs — needed
+    #                            for "Kennzeichen B-MW-1234", "14:30 Uhr"
     gradium_json_config = json.dumps(
         {
-            "padding_bonus": 0.4,
-            # temp 0.9 + cfg_coef 1.5 had too much prosody variance — emphasis
-            # would land on the wrong syllable from one call to the next.
-            # 0.75 / 1.8 keeps emotional inflection but anchors the stress
-            # pattern so the same sentence gets the same beats every time.
-            "temp": 0.75,
-            "cfg_coef": 1.8,
+            "padding_bonus": 0.6,
+            "temp": 0.4,
+            "cfg_coef": 2.2,
             "rewrite_rules": "de",
         }
     )
@@ -353,7 +347,7 @@ async def run_bot(websocket: WebSocket) -> None:
         json_config=gradium_json_config,
         settings=GradiumTTSService.Settings(
             model="default",
-            voice=os.getenv("GRADIUM_VOICE_ID", "D8iRHK1qJhqfE00v"),
+            voice=os.getenv("GRADIUM_VOICE_ID", "ApPgTz3nMHOsWxhK"),
         ),
     )
     # thinking_budget=0 disables Gemini 2.5 Flash thinking — saves 0.5–2s on
