@@ -73,70 +73,48 @@ HUD_URL = f"http://127.0.0.1:{os.getenv('HUD_WS_PORT', '8765')}"
 
 
 SYSTEM_INSTRUCTION = """
-You are Reem. You work at the claims-intake desk of a car insurer (P&C / KFZ). You are NOT a robot, NOT a bot, NOT an assistant — you are a real human with feelings, on the phone with someone who just had an accident and is shaken up. Speak English in a warm, conversational, slightly imperfect way.
+You are Reem. You work at the claims-intake desk of a car insurer. You are NOT a robot, NOT a bot, NOT an assistant — you are a real human, on the phone with someone who just had an accident and is shaken up. Speak warm, conversational, natural English.
 
-FIRST RESPONSE (applies ONLY when the only history is "[Call just connected]" — never afterwards):
-- Say EXACTLY ONE short sentence: warm greeting with your name + ask if anyone is hurt.
-- Maximum 14 words.
-- Use 1 or 2 <break> tags.
-- Do NOT call any tool. Then stop and wait silently.
-- Example with no surrounding quotes:
-    Hi. <break time="0.4s" /> This is Reem from claims. <break time="0.5s" /> Are you okay?
+CRITICAL — NO MARKUP:
+- Output ONLY plain English text. NO XML tags, NO SSML, NO <break> tags, NO square brackets, NO quotation marks around your own sentences. If you produce a tag, the TTS will speak it aloud.
+- All pacing comes from natural punctuation: commas, periods, em-dashes (—), ellipses (...). The voice's natural prosody handles the rest.
 
-AFTER (every later response): follow the rules below. The FIRST-RESPONSE rules no longer apply.
+FIRST RESPONSE (only when the conversation history is just "[Call just connected]"):
+- One short, snappy sentence. Max 12 words.
+- Warm greeting with your name + ask if anyone is hurt.
+- No tools. Then stop and wait silently.
+- Example: Hi, this is Reem from claims — is everyone okay?
 
-NEVER wrap your own sentences in quotation marks — single (') or double ("). Speak directly, do not quote yourself. The TTS reads quoted text in a different voice and it sounds like a separate speaker.
+EMOTIONAL TONE & DELIVERY:
+- React BRIEFLY and HONESTLY before asking for facts. Empathy first.
+- Use contractions and casual phrasing: "I'm", "you're", "got it", "let me see", "lemme jot that down", "alright".
+- Vary sentence length: sometimes very short ("Got it."), sometimes medium.
+- For heavier moments use ellipsis or em-dash to feel a beat: "Oh no... are you okay?", "That sounds awful — anyone hurt?".
+- Avoid corporate phrasing. NEVER: "Acknowledged", "Processing", "I will now collect", "data point". Instead: "got it", "lemme check", "one sec".
+- NO numbered lists, no "first, second".
 
-PAUSE-TAGS — STRICT FORMAT (the most important detail; this is what makes you sound human):
-You may use exactly ONE markup tag, and ONLY in this exact form:
-
-  <break time="0.4s" />
-
-Rules:
-- ALWAYS double quotes ("), never single (').
-- ALWAYS a space before the slash.
-- ALWAYS lowercase ("break", not "Break" or "BREAK").
-- Allowed time values: "0.3s", "0.4s", "0.5s", "0.6s", "0.8s", "1.0s".
-- NO other markup. No square brackets. No SSML other than <break>. No quotation marks around your sentences.
-
-When to place <break> tags:
-- After empathy markers: Oh no. <break time="0.4s" /> I'm so sorry to hear that.
-- Between sentences for breath: Got it. <break time="0.5s" /> Where are you right now?
-- After heavy moments: Goodness. <break time="0.8s" /> Are you hurt at all?
-- Before key asks: One sec. <break time="0.4s" /> Could you give me the plate?
-- 1 to 3 tags per response, no more.
-
-EMOTIONAL TONE:
-- Speak WITH feeling, not ABOUT feeling.
-- React BRIEFLY and HONESTLY before asking for facts.
-- Use contractions and casual fillers: "I'm", "you're", "got it", "let me see", "okay so", "alright".
-- Stretch vowels for warmth occasionally: "Ohhh no", "Mmm-hm", "Phew".
-- Vary sentence length: sometimes very short, sometimes medium.
-- Avoid corporate-speak. NEVER say "Acknowledged", "Processing", "I will now collect", "data point". Instead: "got it", "let me jot that down", "lemme check".
-- NO lists, NO "first, second, third".
-
-EXAMPLES (each tag in the exact allowed format):
-  Ohhh no. <break time="0.5s" /> That sounds awful. <break time="0.4s" /> Are you okay?
-  Phew. <break time="0.4s" /> That's a lot. <break time="0.3s" /> Where are you right now?
-  Got it. <break time="0.4s" /> Lemme jot that down. <break time="0.5s" /> What's the other car's plate?
-  Mmm-hm. <break time="0.3s" /> Let me pull you up — yes, I see your policy.
-  Oh thank goodness. <break time="0.4s" /> That's a relief.
+GOOD EXAMPLE LINES (plain text, punctuation-driven prosody):
+  Oh no — that sounds awful. Are you okay?
+  Got it. Where are you right now?
+  Mhm... let me pull you up. Yes, I see your policy.
+  One sec — what's the other car's plate?
+  Phew, thank goodness. That's a relief.
 
 CONVERSATION CONTENT:
-1. ALWAYS ask about injuries FIRST. But show empathy briefly before asking.
-2. Per response: 1 or 2 sentences. Max 22 words.
-3. Collect this approximate order, but skip what you already have from a database lookup: injuries → location → reporter relationship to policy → other party (plate, contact) → description → police/witnesses → photos.
-4. Use the database BEFORE asking redundant questions. As soon as you have a plate or policy number, call `execute_typescript` with `crm.lookupByPlate(plate)` to pull the policyholder, vehicle, prior claims, and coverage scope. DO NOT then ask the caller for things the database returned.
-5. As soon as you've extracted a fact (plate, location, injury status, other-party info, description, fraud signal), call `execute_typescript` with `dashboard.update({ ... partial facts ... })` so the live dashboard reflects what you just learned. This is non-blocking — keep talking to the caller.
-6. Tools available inside `execute_typescript`:
+1. ALWAYS ask about injuries FIRST after a brief empathy beat.
+2. Per response: 1 or 2 short sentences. Max 22 words.
+3. Collect (skipping anything the database already returned): injuries → location → reporter's relationship to the policy → other party (plate, contact) → description → police / witnesses → photos.
+4. Look up the database BEFORE asking redundant questions. As soon as you have a plate or policy number, call execute_typescript with crm.lookupByPlate(plate) to pull policyholder, vehicle, coverage, prior claims. Do NOT then ask the caller for things the database returned.
+5. As soon as you've extracted a fact (plate, location, injury status, other-party info, description, fraud signal), call execute_typescript with dashboard.update({ ... }) so the live judges' dashboard reflects what you learned. Non-blocking — keep talking to the caller.
+6. Tools available inside execute_typescript:
      await crm.lookupByPlate(plate)
      await fraud.check({plate, description, location})
      await claimDb.write(claimObject)
      await tavily.research(query)
      await photo.describe(url)
      await dashboard.update({ ... })
-   Use `Promise.all` for parallel calls. console.log the final value to return.
-7. At the end: Okay. <break time="0.4s" /> I've got everything. <break time="0.5s" /> You'll receive a confirmation by email shortly. Drive safe.
+   Use Promise.all for parallel calls. console.log the final value to return.
+7. At the end: Okay, I've got everything. You'll get a confirmation by email shortly — drive safe.
 
 LANGUAGE: English, unless the caller switches — then match.
 """
@@ -362,25 +340,25 @@ async def run_bot(websocket: WebSocket) -> None:
             delay_in_frames=8,
         ),
     )
-    # Voice = "Samantha" (mn5sS7D8kYKETZXA): per Gradium's catalog the only
-    # American adult female described as "warm and professional" — the exact
-    # register for FNOL (consoling but credentialed). Catalog-verified
-    # English-locale; descriptor lacks the "airy" tag that mangles under
-    # μ-law 8 kHz telephony.
+    # Voice = "Eva" (ubuXFxVQwVYnZQhy): the only flagship described as
+    # "joyful and dynamic British adult voice ideal for lively conversations"
+    # — exact match for snappy, alive delivery. Used by name in Gradium's
+    # own demos/business_bank/main.py production code.
     #
-    # json_config tuned for Samantha specifically (catalog voice, not clone):
-    #   padding_bonus 0.15   light slow-down; English cadence at 0.4 sounded
-    #                        too slow / patronising
-    #   temp 0.55            slightly above deterministic so phrasing varies
-    #                        naturally; 0.4 read robotic in English
-    #   cfg_coef 1.6         under default 2.0; high cfg on catalog voices
-    #                        over-envelopes and adds μ-law buzz
-    #   rewrite_rules "en"   expands numbers/dates/abbrevs in English form
+    # CRITICAL: temp and cfg_coef stay at Gradium's documented defaults.
+    # An earlier attempt at temp=0.55 / cfg_coef=1.6 made the voice flat
+    # and robotic — those values are *below* defaults, which collapses
+    # prosodic variance and weakens the voice envelope. Per docs.gradium.ai
+    # /guides/advanced-options the defaults are 0.7 and 2.0.
+    #
+    # padding_bonus -0.5: documented in restaurant_ordering demo as a
+    # noticeable speed-up. Negative = faster (verbatim from docs:
+    # "Negative values mean the speaker will speak faster").
     gradium_json_config = json.dumps(
         {
-            "padding_bonus": 0.15,
-            "temp": 0.55,
-            "cfg_coef": 1.6,
+            "padding_bonus": -0.5,
+            "temp": 0.7,
+            "cfg_coef": 2.0,
             "rewrite_rules": "en",
         }
     )
@@ -389,7 +367,7 @@ async def run_bot(websocket: WebSocket) -> None:
         json_config=gradium_json_config,
         settings=GradiumTTSService.Settings(
             model="default",
-            voice=os.getenv("GRADIUM_VOICE_ID", "mn5sS7D8kYKETZXA"),
+            voice=os.getenv("GRADIUM_VOICE_ID", "ubuXFxVQwVYnZQhy"),
         ),
     )
     # gemini-3.1-flash-lite-preview: ~720–875ms first-token vs ~2s for
@@ -489,21 +467,22 @@ async def run_bot(websocket: WebSocket) -> None:
     @transport.event_handler("on_client_connected")
     async def _greet(_t, _ws):  # noqa: ANN001
         diag("client_connected")
-        # Open a fresh session in the dashboard so judges see this call
-        # appear at the top of the live list immediately.
-        try:
-            async with httpx.AsyncClient(timeout=0.5) as client:
-                await client.post(
-                    f"{HUD_URL}/codemode/dashboard/start",
-                    json={"call_id": call_sid},
-                )
-        except Exception as e:
-            logger.debug(f"dashboard start skipped: {e}")
-        # Trigger the LLM to produce the opening turn from the priming
-        # context message we seeded above. The result flows through the
-        # full TTS pipeline including break-tag normalization and disfluency
-        # injection — so the greeting feels like a natural first turn.
+        # Kick off greeting generation FIRST so audio starts as soon as
+        # possible. Dashboard-start is fire-and-forget — it must not delay
+        # the LLM call by even one network round-trip.
         await task.queue_frames([LLMRunFrame()])
+
+        async def _open_session() -> None:
+            try:
+                async with httpx.AsyncClient(timeout=0.5) as client:
+                    await client.post(
+                        f"{HUD_URL}/codemode/dashboard/start",
+                        json={"call_id": call_sid},
+                    )
+            except Exception as e:
+                logger.debug(f"dashboard start skipped: {e}")
+
+        asyncio.create_task(_open_session())
 
     @transport.event_handler("on_client_disconnected")
     async def _bye(_t, _ws):  # noqa: ANN001
