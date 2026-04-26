@@ -356,8 +356,14 @@ async def run_bot(websocket: WebSocket) -> None:
     # "Negative values mean the speaker will speak faster").
     gradium_json_config = json.dumps(
         {
-            "padding_bonus": -0.5,
-            "temp": 0.7,
+            # -0.3 was -0.5: slightly less aggressive speed-up gives the
+            # voice room to breathe inside phrases — more natural cadence
+            # than pure speed.
+            "padding_bonus": -0.3,
+            # 0.85 was 0.7 (default): pushed just above default so prosodic
+            # variation across pauses and emphatic moments feels less
+            # uniform, more like a real human's micro-inflections.
+            "temp": 0.85,
             "cfg_coef": 2.0,
             "rewrite_rules": "en",
         }
