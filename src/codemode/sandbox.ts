@@ -38,6 +38,9 @@ async function call(path: string, body: unknown): Promise<any> {
 (globalThis as any).photo = {
   describe: (url: string) => call("photo/describe", { url }),
 };
+(globalThis as any).dashboard = {
+  update: (facts: object) => call("dashboard/update", { facts }),
+};
 
 const CODE = process.argv.slice(2).join(" ");
 try {

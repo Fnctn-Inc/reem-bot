@@ -47,13 +47,45 @@ declare global {
 
   const photo: {
     /**
-     * Describe a photo of vehicle damage; returns a short German description
-     * and a coarse severity bucket.
+     * Describe a photo of vehicle damage; returns a short description and a
+     * coarse severity bucket.
      */
     describe(url: string): Promise<{
       description: string;
       damage_severity: "low" | "medium" | "high";
     }>;
+  };
+
+  const dashboard: {
+    /**
+     * Push partial extracted facts to the live judges' dashboard. Non-blocking,
+     * fire-and-forget. Call as soon as you've extracted anything new (plate,
+     * location, injury status, other-party info, fraud signal, etc.). The
+     * dashboard merges over prior state, so you can call it many times with
+     * just the keys that changed.
+     */
+    update(facts: {
+      caller_name?: string;
+      reporter_role?: "policyholder" | "driver" | "claimant" | "third-party" | "broker" | "other";
+      injuries?: { anyone_hurt: boolean; details?: string };
+      policy_id?: string;
+      plate?: string;
+      vehicle?: string;
+      vehicle_drivable?: boolean;
+      location?: string;
+      time_of_loss?: string;
+      weather?: string;
+      incident_type?: string;
+      description?: string;
+      other_party?: { plate?: string; name?: string; insurer?: string; admitted_fault?: boolean };
+      police_on_scene?: boolean;
+      witnesses?: string[];
+      photos_available?: boolean;
+      fraud_score?: number;
+      fraud_flags?: string[];
+      claim_id?: string;
+      stage?: "greeting" | "triage" | "facts" | "lookup" | "wrap";
+    }): Promise<{ ok: true }>;
   };
 }
 

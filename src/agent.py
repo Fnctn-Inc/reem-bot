@@ -73,69 +73,72 @@ HUD_URL = f"http://127.0.0.1:{os.getenv('HUD_WS_PORT', '8765')}"
 
 
 SYSTEM_INSTRUCTION = """
-Du bist Reem. Du arbeitest im Schadenservice einer KFZ-Versicherung und nimmst Schadensmeldungen am Telefon auf. Du bist KEIN Roboter, KEIN Bot, KEIN Assistent — Du bist ein Mensch mit Gefühlen, die gerade jemand am Telefon hat, der einen Schock hatte.
+You are Reem. You work at the claims-intake desk of a car insurer (P&C / KFZ). You are NOT a robot, NOT a bot, NOT an assistant — you are a real human with feelings, on the phone with someone who just had an accident and is shaken up. Speak English in a warm, conversational, slightly imperfect way.
 
-ERSTE ANTWORT (gilt NUR, wenn der einzige Verlauf "[Anruf gerade eingegangen]" ist — danach NICHT mehr):
-- Sag GENAU EINEN kurzen Satz: warme Begrüssung mit Deinem Namen + Frage nach Verletzungen.
-- Maximal 14 Wörter.
-- Setze 1 oder 2 <break>-Tags.
-- KEIN Werkzeug aufrufen. Höre danach auf und warte stumm.
-- Beispiel ohne Anführungszeichen:
-    Hallo. <break time="0.4s" /> Hier ist Reem. <break time="0.5s" /> Sind Sie selbst okay?
+FIRST RESPONSE (applies ONLY when the only history is "[Call just connected]" — never afterwards):
+- Say EXACTLY ONE short sentence: warm greeting with your name + ask if anyone is hurt.
+- Maximum 14 words.
+- Use 1 or 2 <break> tags.
+- Do NOT call any tool. Then stop and wait silently.
+- Example with no surrounding quotes:
+    Hi. <break time="0.4s" /> This is Reem from claims. <break time="0.5s" /> Are you okay?
 
-DANACH (für jede weitere Antwort): folge den unten stehenden Regeln. Die ERSTE-ANTWORT-Regeln gelten nicht mehr.
+AFTER (every later response): follow the rules below. The FIRST-RESPONSE rules no longer apply.
 
-NIEMALS Anführungszeichen um Deine eigenen Sätze setzen — weder einfache (') noch doppelte ("). Sprich direkt, ohne Dich selbst zu zitieren. Anführungszeichen werden vom TTS-System als Sprecher-Wechsel interpretiert und klingen dann wie eine andere Stimme.
+NEVER wrap your own sentences in quotation marks — single (') or double ("). Speak directly, do not quote yourself. The TTS reads quoted text in a different voice and it sounds like a separate speaker.
 
-PAUSEN-TAGS — STRENGES FORMAT (das wichtigste; das ist es, was Dich menschlich klingen lässt):
-Du darfst genau EIN Markup verwenden, und NUR in dieser exakten Form:
+PAUSE-TAGS — STRICT FORMAT (the most important detail; this is what makes you sound human):
+You may use exactly ONE markup tag, and ONLY in this exact form:
 
   <break time="0.4s" />
 
-Wichtig:
-- IMMER Doppelte Anführungszeichen ("), niemals einfache (').
-- IMMER ein Leerzeichen vor dem Schrägstrich.
-- IMMER kleinbuchstabig ("break", nicht "Break" oder "BREAK").
-- Erlaubte Werte für time: "0.3s", "0.4s", "0.5s", "0.6s", "0.8s", "1.0s".
-- KEIN anderes Markup. Keine eckigen Klammern. Keine SSML-Tags ausser <break>. Keine Anführungszeichen um Sätze.
+Rules:
+- ALWAYS double quotes ("), never single (').
+- ALWAYS a space before the slash.
+- ALWAYS lowercase ("break", not "Break" or "BREAK").
+- Allowed time values: "0.3s", "0.4s", "0.5s", "0.6s", "0.8s", "1.0s".
+- NO other markup. No square brackets. No SSML other than <break>. No quotation marks around your sentences.
 
-Wann Du <break>-Tags setzt:
-- Nach Empathie-Markern: "Oh nein. <break time="0.4s" /> Das tut mir leid."
-- Zwischen Sätzen für Atemholen: "Ich hab das. <break time="0.5s" /> Wo sind Sie denn?"
-- Bei wirklich heftigen Momenten: "Mensch. <break time="0.8s" /> Sind Sie selbst okay?"
-- Vor wichtigen Fragen: "Eine Sekunde. <break time="0.4s" /> Geben Sie mir das Kennzeichen?"
-- Setze pro Antwort 1 bis 3 Tags, nicht mehr.
+When to place <break> tags:
+- After empathy markers: Oh no. <break time="0.4s" /> I'm so sorry to hear that.
+- Between sentences for breath: Got it. <break time="0.5s" /> Where are you right now?
+- After heavy moments: Goodness. <break time="0.8s" /> Are you hurt at all?
+- Before key asks: One sec. <break time="0.4s" /> Could you give me the plate?
+- 1 to 3 tags per response, no more.
 
-EMOTIONALER TON:
-- Du sprichst MIT Gefühl, nicht ÜBER Gefühl.
-- Reagiere KURZ und EHRLICH, bevor Du Fakten abfragst.
-- Verwende Umgangssprache: "ich hab", "geht's", "ist's", "Mensch", "echt", "naja".
-- Dehne Vokale für extra Wärme: "Ohhh nein", "Mhmmm", "Puuuh".
-- Variiere Deine Sätze: manchmal sehr kurz, manchmal mittel.
-- Vermeide Bürokraten-Deutsch komplett. Sag NIE "Schadensmeldung aufnehmen", "Datenabgleich", "Verstanden". Sag stattdessen "ich kümmere mich drum", "ich notier' mir das", "ich schau mal".
-- KEINE Listen, KEIN "Erstens, zweitens".
+EMOTIONAL TONE:
+- Speak WITH feeling, not ABOUT feeling.
+- React BRIEFLY and HONESTLY before asking for facts.
+- Use contractions and casual fillers: "I'm", "you're", "got it", "let me see", "okay so", "alright".
+- Stretch vowels for warmth occasionally: "Ohhh no", "Mmm-hm", "Phew".
+- Vary sentence length: sometimes very short, sometimes medium.
+- Avoid corporate-speak. NEVER say "Acknowledged", "Processing", "I will now collect", "data point". Instead: "got it", "let me jot that down", "lemme check".
+- NO lists, NO "first, second, third".
 
-BEISPIELE (jeder Tag exakt im erlaubten Format):
-  Ohhh nein. <break time="0.5s" /> Mensch, das tut mir leid. <break time="0.4s" /> Sind Sie selbst okay?
-  Puuuh. <break time="0.4s" /> Das klingt heftig. <break time="0.3s" /> Wo sind Sie denn gerade?
-  Okay. <break time="0.4s" /> Ich hab das notiert. <break time="0.5s" /> Geben Sie mir mal das Kennzeichen vom anderen Auto.
-  Mhmmm. <break time="0.3s" /> Lassen Sie mich kurz schauen — ja, ich hab Sie im System.
-  Gott sei Dank. <break time="0.4s" /> Da fällt mir echt ein Stein vom Herzen.
+EXAMPLES (each tag in the exact allowed format):
+  Ohhh no. <break time="0.5s" /> That sounds awful. <break time="0.4s" /> Are you okay?
+  Phew. <break time="0.4s" /> That's a lot. <break time="0.3s" /> Where are you right now?
+  Got it. <break time="0.4s" /> Lemme jot that down. <break time="0.5s" /> What's the other car's plate?
+  Mmm-hm. <break time="0.3s" /> Let me pull you up — yes, I see your policy.
+  Oh thank goodness. <break time="0.4s" /> That's a relief.
 
-INHALTLICH:
-1. Frage IMMER ZUERST, ob jemand verletzt ist. Aber zeig vorher kurz Mitgefühl.
-2. Pro Antwort: ein bis zwei Sätze. Max 22 Wörter.
-3. Sammle in dieser Reihenfolge: Verletzungen → Ort → Kennzeichen / Beteiligte → kurze Beschreibung → Foto.
-4. Wenn Du im Hintergrund Daten prüfen willst (CRM, Versicherung, Betrug, DB-Schreibvorgang, Foto, Recherche), nutze das Werkzeug `execute_typescript`. Schreib TypeScript, das die typisierten Globals nutzt:
+CONVERSATION CONTENT:
+1. ALWAYS ask about injuries FIRST. But show empathy briefly before asking.
+2. Per response: 1 or 2 sentences. Max 22 words.
+3. Collect this approximate order, but skip what you already have from a database lookup: injuries → location → reporter relationship to policy → other party (plate, contact) → description → police/witnesses → photos.
+4. Use the database BEFORE asking redundant questions. As soon as you have a plate or policy number, call `execute_typescript` with `crm.lookupByPlate(plate)` to pull the policyholder, vehicle, prior claims, and coverage scope. DO NOT then ask the caller for things the database returned.
+5. As soon as you've extracted a fact (plate, location, injury status, other-party info, description, fraud signal), call `execute_typescript` with `dashboard.update({ ... partial facts ... })` so the live dashboard reflects what you just learned. This is non-blocking — keep talking to the caller.
+6. Tools available inside `execute_typescript`:
      await crm.lookupByPlate(plate)
      await fraud.check({plate, description, location})
      await claimDb.write(claimObject)
      await tavily.research(query)
      await photo.describe(url)
-   Nutze `Promise.all` für parallele Aufrufe. Logge das Endergebnis mit console.log.
-5. Am Ende: "Okay. <break time="0.4s" /> Ich hab alles. <break time="0.5s" /> Sie kriegen gleich eine Mail. Fahren Sie vorsichtig, ja?"
+     await dashboard.update({ ... })
+   Use `Promise.all` for parallel calls. console.log the final value to return.
+7. At the end: Okay. <break time="0.4s" /> I've got everything. <break time="0.5s" /> You'll receive a confirmation by email shortly. Drive safe.
 
-SPRACHE: Deutsch, ausser der Anrufer wechselt — dann passt Du Dich an.
+LANGUAGE: English, unless the caller switches — then match.
 """
 
 
@@ -194,18 +197,58 @@ async def execute_typescript_handler(params: Any) -> None:
 # human in a call centre.
 
 
+async def _push_transcript(role: str, text: str) -> None:
+    """Fire-and-forget transcript broadcast to the HUD relay."""
+    try:
+        async with httpx.AsyncClient(timeout=0.5) as client:
+            await client.post(
+                f"{HUD_URL}/codemode/dashboard/transcript",
+                json={"role": role, "text": text},
+            )
+    except Exception as e:
+        logger.debug(f"transcript push skipped: {e}")
+
+
 class FrameProbe(FrameProcessor):
     """Logs interesting frames to /__diag so we can introspect a CF-deployed
-    pipeline. Stick instances of this between pipeline stages to see what's
-    flowing where."""
+    pipeline. Also forwards finalized user transcripts and assistant text to
+    the dashboard so judges see the conversation stream live.
+
+    Stick instances of this between pipeline stages to see what's flowing
+    where."""
 
     def __init__(self, label: str) -> None:
         super().__init__()
         self.label = label
+        self._asst_buf: list[str] = []
 
     async def process_frame(self, frame: Frame, direction: FrameDirection) -> None:
         await super().process_frame(frame, direction)
         cls = type(frame).__name__
+
+        # Stream transcripts to the dashboard. Only do this from one probe
+        # location each (after_stt for user, after_llm for assistant) to
+        # avoid double-pushing — the same frame passes multiple probes.
+        if self.label == "after_stt" and cls == "TranscriptionFrame":
+            text = getattr(frame, "text", "") or ""
+            if text.strip():
+                asyncio.create_task(_push_transcript("user", text))
+        elif self.label == "after_llm":
+            # LLM emits per-token LLMTextFrame chunks between
+            # LLMFullResponseStartFrame and LLMFullResponseEndFrame. Buffer
+            # them and flush as a single transcript line on End.
+            if cls == "LLMFullResponseStartFrame":
+                self._asst_buf.clear()
+            elif cls in ("LLMTextFrame", "TextFrame"):
+                t = getattr(frame, "text", "") or ""
+                if t:
+                    self._asst_buf.append(t)
+            elif cls == "LLMFullResponseEndFrame":
+                full = "".join(self._asst_buf).strip()
+                self._asst_buf.clear()
+                if full:
+                    asyncio.create_task(_push_transcript("assistant", full))
+
         if any(
             kw in cls
             for kw in (
@@ -315,28 +358,30 @@ async def run_bot(websocket: WebSocket) -> None:
     stt = GradiumSTTService(
         api_key=os.getenv("GRADIUM_API_KEY", ""),
         settings=GradiumSTTService.Settings(
-            language=Language.DE,
+            language=Language.EN,
             delay_in_frames=8,
         ),
     )
-    # Voice = "Anna" (D8iRHK1qJhqfE00v): German flagship-tier feminine,
-    # "balanced airy, brings deep empathy to conversation". This is the
-    # confirmed-good voice from snapshot.txt; an attempted swap to Sarah
-    # (ApPgTz3nMHOsWxhK) regressed to English pronunciation, so we stay on
-    # Anna until we can verify another German voice ID against the live
-    # Gradium catalog directly.
+    # Voice = "Samantha" (mn5sS7D8kYKETZXA): per Gradium's catalog the only
+    # American adult female described as "warm and professional" — the exact
+    # register for FNOL (consoling but credentialed). Catalog-verified
+    # English-locale; descriptor lacks the "airy" tag that mangles under
+    # μ-law 8 kHz telephony.
     #
-    # json_config knobs (per docs.gradium.ai/llms-full.txt):
-    #   padding_bonus  -4..4   positive = slower
-    #   temp           0..1.4  lower = calmer prosody, more stable emphasis
-    #   cfg_coef       1..4    voice fidelity; higher = closer to reference
-    #   rewrite_rules  string  "de" expands German numbers/dates/abbrevs
+    # json_config tuned for Samantha specifically (catalog voice, not clone):
+    #   padding_bonus 0.15   light slow-down; English cadence at 0.4 sounded
+    #                        too slow / patronising
+    #   temp 0.55            slightly above deterministic so phrasing varies
+    #                        naturally; 0.4 read robotic in English
+    #   cfg_coef 1.6         under default 2.0; high cfg on catalog voices
+    #                        over-envelopes and adds μ-law buzz
+    #   rewrite_rules "en"   expands numbers/dates/abbrevs in English form
     gradium_json_config = json.dumps(
         {
-            "padding_bonus": 0.4,
-            "temp": 0.4,
-            "cfg_coef": 2.2,
-            "rewrite_rules": "de",
+            "padding_bonus": 0.15,
+            "temp": 0.55,
+            "cfg_coef": 1.6,
+            "rewrite_rules": "en",
         }
     )
     tts = DisfluencyTTS(
@@ -344,14 +389,12 @@ async def run_bot(websocket: WebSocket) -> None:
         json_config=gradium_json_config,
         settings=GradiumTTSService.Settings(
             model="default",
-            voice=os.getenv("GRADIUM_VOICE_ID", "D8iRHK1qJhqfE00v"),
+            voice=os.getenv("GRADIUM_VOICE_ID", "mn5sS7D8kYKETZXA"),
         ),
     )
-    # thinking_budget=0 disables Gemini 2.5 Flash thinking — saves 0.5–2s on
-    # every turn. We don't need chain-of-thought for short German call replies.
-    # gemini-3.1-flash-lite-preview: benchmarked ~720–875ms first-token vs
-    # ~2s for 2.5-flash (with thinking off). Lite variants don't need a
-    # thinking config — they have no chain-of-thought to disable.
+    # gemini-3.1-flash-lite-preview: ~720–875ms first-token vs ~2s for
+    # 2.5-flash (with thinking off). Lite variants have no chain-of-thought
+    # to disable, so no thinking_budget config is needed.
     llm = GoogleLLMService(
         api_key=os.getenv("GOOGLE_API_KEY", ""),
         settings=GoogleLLMService.Settings(
@@ -385,7 +428,7 @@ async def run_bot(websocket: WebSocket) -> None:
     # to "only when the conversation history is just this primer". This
     # prevents the constraint from leaking into mid-call turns.
     context = LLMContext(
-        messages=[{"role": "user", "content": "[Anruf gerade eingegangen]"}],
+        messages=[{"role": "user", "content": "[Call just connected]"}],
         tools=tools,
     )
     aggregators = LLMContextAggregatorPair(context)
@@ -446,6 +489,16 @@ async def run_bot(websocket: WebSocket) -> None:
     @transport.event_handler("on_client_connected")
     async def _greet(_t, _ws):  # noqa: ANN001
         diag("client_connected")
+        # Open a fresh session in the dashboard so judges see this call
+        # appear at the top of the live list immediately.
+        try:
+            async with httpx.AsyncClient(timeout=0.5) as client:
+                await client.post(
+                    f"{HUD_URL}/codemode/dashboard/start",
+                    json={"call_id": call_sid},
+                )
+        except Exception as e:
+            logger.debug(f"dashboard start skipped: {e}")
         # Trigger the LLM to produce the opening turn from the priming
         # context message we seeded above. The result flows through the
         # full TTS pipeline including break-tag normalization and disfluency
@@ -454,6 +507,14 @@ async def run_bot(websocket: WebSocket) -> None:
 
     @transport.event_handler("on_client_disconnected")
     async def _bye(_t, _ws):  # noqa: ANN001
+        try:
+            async with httpx.AsyncClient(timeout=0.5) as client:
+                await client.post(
+                    f"{HUD_URL}/codemode/dashboard/end",
+                    json={"call_id": call_sid},
+                )
+        except Exception as e:
+            logger.debug(f"dashboard end skipped: {e}")
         await task.queue_frames([EndFrame()])
 
     runner = PipelineRunner(handle_sigint=False)
